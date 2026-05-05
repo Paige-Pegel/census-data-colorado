@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Census Block Percentiles</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+<script charset="utf-8" src="https://d3js.org/d3.v4.min.js"></script>
+<script charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/dimple/2.3.0/dimple.latest.min.js"></script>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle at top, #1e293b, #0f172a);
+    color: white;
+    text-align: center;
+    padding: 40px;
+}
+
+/* CARD CONTAINER */
+#chartContainer {
+    max-width: 1050px;
+    margin: auto;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 30px 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* TITLE */
+#charttitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* SUBTEXT */
+#chartsubhead {
+    display: block;
+    margin-top: 6px;
+    color: #cbd5e1;
+    font-size: 15px;
+}
+
+p2 {
+    display: block;
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* DROPDOWN */
+select {
+    margin-top: 18px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    background: #0f172a;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: 0.2s;
+}
+
+select:hover {
+    background: #111c33;
+}
+
+/* SVG spacing */
+svg {
+    margin-top: 20px;
+}
+
+/* TOOLTIP STYLE (future-proof) */
+.tooltip {
+    position: absolute;
+    background: rgba(15,23,42,0.95);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    pointer-events: none;
+    opacity: 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="chartContainer">
+
+    <h2 id="charttitle">Census Block Environmental Condition Percentiles</h2>
+
+    <p id="chartsubhead">
+        Colorado EnviroScreen 2.0, percentile ranking across Colorado communities:
+    </p>
+
+    <p2>
+        The higher the percentile, the more environmental burden per census block.
+    </p2>
+
+    <br>
+
+    <select id="ImpactMenu">
+        <option>Noise</option>
+        <option>Ozone</option>
+        <option>Toxic Air Emissions</option>
+        <option>Impaired Streams and Rivers</option>
+        <option>Wastewater Discharge</option>
+        <option>Drought</option>
+    </select>
+
+</div>
+
+<script>
+
+d3.csv("https://raw.githubusercontent.com/faraway69/Final/main/CensusBlocksv6.csv", function(CensusBlocks) {
+
+const dropdown = document.getElementById("ImpactMenu");
+
+let svg = dimple.newSvg("#chartContainer", 900, 450);
+let chart;
+
+// color system per metric
+const colorMap = {
+    "Noise": "#60a5fa",
+    "Ozone": "#34d399",
+    "Toxic Air Emissions": "#f87171",
+    "Impaired Streams and Rivers": "#22d3ee",
+    "Wastewater Discharge": "#fb923c",
+    "Drought": "#facc15"
+};
+
+function getMetric() {
+    return dropdown.value.replace(/ /g, '');
+}
+
+// =====================
+// DRAW FUNCTION (FIXED + CLEAN)
+// =====================
+function draw() {
+
+    svg.selectAll("*").remove();
+
+    let metric = dropdown.value.replace(/ /g, '');
+
+    chart = new dimple.chart(svg, CensusBlocks);
+
+    chart.setBounds(80, 40, 760, 330);
+
+    let x = chart.addCategoryAxis("x", "DataCenter");
+    x.title = "Data Center";
+    x.addOrderRule("DataCenter");
+
+    let y = chart.addMeasureAxis("y", metric);
+    y.title = "Percentile";
+    y.overrideMax = 100;
+
+    let s = chart.addSeries(null, dimple.plot.bar);
+
+    chart.defaultColors = [
+        new dimple.color(colorMap[dropdown.value] || "#a855f7")
+    ];
+
+    chart.draw(600);
+
+    styleChart();
+}
+
+// =====================
+// CLEANER VISUAL STYLE
+// =====================
+function styleChart() {
+
+    svg.selectAll("g.dimple-axis-x text")
+        .style("fill", "#ffffff")
+        .style("font-weight", "600");
+
+    svg.selectAll("g.dimple-axis-y text")
+        .style("fill", "#94a3b8");
+
+    svg.selectAll("g.tick line")
+        .style("stroke", "rgba(255,255,255,0.08)");
+
+    svg.selectAll("path.domain")
+        .style("stroke", "rgba(255,255,255,0.2)");
+}
+
+// update on dropdown change
+dropdown.onchange = draw;
+
+// initial render
+draw();
+
+});
+
+</script>
+
+</body>
+</html>
